@@ -67,34 +67,27 @@ fun main(args : Array<String>) {
                 return@on helpCommand(message)
             }
 
+            // 이부분 추상화 나중에 하기
             if (message.content.equals("!생방송", ignoreCase = true)) {
                 val liveInfo = runBlocking {
                     val liveInfo = HoloDexRequest.getLive()
                     return@runBlocking liveInfo
                 }
 
-                val embedList = mutableListOf<EmbedCreateSpec>()
+                val embed : EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+                    .color(Color.CYAN)
+                    .title("생방송 리스트")
+                    .timestamp(Instant.now())
 
                 for(streamer in liveInfo) {
-                    val embed : EmbedCreateSpec = EmbedCreateSpec.builder()
-                        .color(Color.CYAN)
-                        .title(streamer.name)
-                        .addField("생방송","${streamer.url}    ${streamer.startTime}    ${streamer.category}",false)
-                        .timestamp(Instant.now())
-                        .build()
-                    embedList.add(embed)
+                    embed.addField(streamer.name,"${streamer.url}",true)
+                    embed.addField("Category","${streamer.category}\n${streamer.startTime}",true)
+                    embed.addField("\u200b", "\u200b",true)
                 }
-                // embed UI 고민하고 해보기 embed 하나에 다 처리해야될거같음
 
-//                var botMessage = "```markdown\n"
-//
-//                for(streamer in liveInfo) {
-//                    botMessage += "[test][${streamer.url}]    ${streamer.startTime}    ${streamer.category}\n"
-//                }
-//                botMessage += "```"
                 return@on message.channel.flatMap<Message> { channel: MessageChannel ->
-                    //channel.createMessage(embed.build())
-                    channel.createMessage(*embedList.toTypedArray())
+                    channel.createMessage(embed.build())
+                    //channel.createMessage(*embedList.toTypedArray())
                 }
             }
             Mono.empty()
