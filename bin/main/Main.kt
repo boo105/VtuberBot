@@ -1,29 +1,23 @@
 import com.google.gson.Gson
-import com.sedmelluq.discord.lavaplayer.format.AudioDataFormat
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
-import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrameBufferFactory
-import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
-import discord4j.core.`object`.VoiceState
-import discord4j.core.`object`.entity.Member
+import discord4j.core.`object`.Embed
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.event.domain.lifecycle.ReadyEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.spec.EmbedCreateFields
 import discord4j.core.spec.EmbedCreateSpec
-import discord4j.core.spec.VoiceChannelJoinSpec
 import discord4j.rest.util.Color
-import discord4j.voice.AudioProvider
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import reactor.core.publisher.Mono
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.File
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
-
 
 data class ClientToken(val id : String, val secret : String, val token : String)
 
@@ -51,27 +45,6 @@ fun main(args : Array<String>) {
     val token = clientInfo.token
     val client = DiscordClient.create(token)
 
-    // Creates AudioPlayer instances and translates URLs to AudioTrack instances
-    val playerManager: AudioPlayerManager = DefaultAudioPlayerManager()
-    // This is an optimization strategy that Discord4J can utilize.
-    // It is not important to understand
-    playerManager.configuration.frameBufferFactory =
-        AudioFrameBufferFactory { bufferDuration: Int, format: AudioDataFormat?, stopping: AtomicBoolean? ->
-            NonAllocatingAudioFrameBuffer(
-                bufferDuration,
-                format,
-                stopping
-            )
-        }
-    // Allow playerManager to parse remote sources like YouTube links
-    AudioSourceManagers.registerRemoteSources(playerManager)
-    // Create an AudioPlayer so Discord4J can receive audio data
-    val player = playerManager.createPlayer()
-    // We will be creating LavaPlayerAudioProvider in the next step
-    val provider: AudioProvider = LavaPlayerAudioProvider(player)
-
-    val scheduler : TrackScheduler = TrackScheduler(player)
-
     val login = client.withGateway { gateway: GatewayDiscordClient ->
         // ReadyEvent
         val printOnLogin = gateway.on(ReadyEvent::class.java) { event: ReadyEvent ->
@@ -94,7 +67,7 @@ fun main(args : Array<String>) {
                 return@on helpCommand(message)
             }
 
-            // 이부분 추상화 나중에 하기 뮤직봇 듀토리얼에 interface 써서 명령어 실행부분 추상화 하는거 있음 보셈
+            // 이부분 추상화 나중에 하기
             if (message.content.equals("!생방송", ignoreCase = true)) {
                 val liveInfo = runBlocking {
                     val liveInfo = HoloDexRequest.getLive()
@@ -117,32 +90,6 @@ fun main(args : Array<String>) {
                     //channel.createMessage(*embedList.toTypedArray())
                 }
             }
-
-            if (message.content.equals("!인기차트", ignoreCase = true)) {
-                val member: Member? = event.member.orElse(null)
-                member?.let {
-                    val voiceState: VoiceState? = it.getVoiceState().block()
-                    voiceState?.let {
-                        val channel = it.channel.block()
-                        val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(provider)
-                        channel.join(spec).block()
-//                        channel?.join { spec: LegacyVoiceChannelJoinSpec ->
-//                            spec.setProvider(
-//                                provider
-//                            )
-//                        }?.block()
-                    }
-                }
-
-                val hotSongs = runBlocking {
-                    return@runBlocking HoloDexRequest.getHotSongs()
-                }
-                println(hotSongs.videoLink[1])
-                // val content: String = event.message.content
-                // val command = Arrays.asList(*content.split(" ").toTypedArray())
-                playerManager.loadItem(hotSongs.videoLink[1], scheduler)
-            }
-
             Mono.empty()
         }.then()
 
