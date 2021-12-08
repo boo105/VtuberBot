@@ -57,7 +57,9 @@ data class HoloLiveOnAirInfo(
 
 data class HotSongs(
     val name : List<String>,
-    val videoLink : List<String>
+    val videoLink : List<String>,
+    val startTime : List<Long>,
+    val endTime : List<Int>
 )
 
 interface API {
@@ -118,15 +120,19 @@ object HoloDexRequest {
 
         val names = mutableListOf<String>()
         val videoLinks = mutableListOf<String>()
+        val startTimes = mutableListOf<Long>()
+        val endTimes = mutableListOf<Int>()
 
         for(song in data.orEmpty()) {
             val videoLink : String = getVideoLink(song.video_id, song.start)
             names.add(song.name)
             videoLinks.add(videoLink)
+            startTimes.add(song.start.toLong())
+            endTimes.add(song.end)
             //hotSongs.add(HotSongs(song.name, videoLink))
         }
 
-        val hotSongs = HotSongs(names,videoLinks)
+        val hotSongs = HotSongs(names,videoLinks,startTimes,endTimes)
 
         return hotSongs
     }
