@@ -1,23 +1,23 @@
+import Music.TrackScheduler
 import com.google.gson.Gson
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
-import discord4j.core.`object`.Embed
+import discord4j.core.`object`.VoiceState
+import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.event.domain.lifecycle.ReadyEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.spec.EmbedCreateFields
 import discord4j.core.spec.EmbedCreateSpec
+import discord4j.core.spec.VoiceChannelJoinSpec
 import discord4j.rest.util.Color
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import reactor.core.publisher.Mono
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.io.File
 import java.time.Instant
 import java.util.*
+import Music.*
+
 
 data class ClientToken(val id : String, val secret : String, val token : String)
 
@@ -35,6 +35,18 @@ fun helpCommand(message : Message) : Mono<Message> {
             .build()
 
         channel.createMessage(embed)
+    }
+}
+
+fun botJoin(event : MessageCreateEvent) {
+    val member: Member? = event.member.orElse(null)
+    member?.let {
+        val voiceState: VoiceState? = it.getVoiceState().block()
+        voiceState?.let {
+            val channel = it.channel.block()
+            val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(MusicManager.getAudioProvider())
+            channel.join(spec).block()
+        }
     }
 }
 
@@ -67,7 +79,7 @@ fun main(args : Array<String>) {
                 return@on helpCommand(message)
             }
 
-            // 이부분 추상화 나중에 하기
+            // 이부분 추상화 나중에 하기 뮤직봇 듀토리얼에 interface 써서 명령어 실행부분 추상화 하는거 있음 보셈
             if (message.content.equals("!생방송", ignoreCase = true)) {
                 val liveInfo = runBlocking {
                     val liveInfo = HoloDexRequest.getLive()
@@ -90,6 +102,27 @@ fun main(args : Array<String>) {
                     //channel.createMessage(*embedList.toTypedArray())
                 }
             }
+
+            if (message.content.equals("!인기차트", ignoreCase = true)) {
+                botJoin(event)
+
+                val hotSongs = runBlocking {
+                    return@runBlocking HoloDexRequest.getHotSongs()
+                }
+                MusicManager.playSong(hotSongs)
+                println(hotSongs.videoLink[1])
+                println(hotSongs.startTime[1])
+                println(hotSongs.endTime[1])
+            }
+
+            if (message.content.contains("!play", ignoreCase = true)) {
+                val commandSplit = message.content.split("!play")
+                val url = commandSplit[1].replace(" ","")
+                botJoin(event)
+
+                MusicManager.playSongWithYoutubeLink(url)
+            }
+
             Mono.empty()
         }.then()
 

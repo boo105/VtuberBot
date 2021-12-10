@@ -5,6 +5,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
 
+// response 파라미터
 data class ResultGetLiveItem(
     val available_at: String,
     val channel: Channel,
@@ -19,7 +20,6 @@ data class ResultGetLiveItem(
     val topic_id: String?,
     val type: String
 )
-
 data class Channel(
     val english_name: String,
     val id: String,
@@ -28,11 +28,38 @@ data class Channel(
     val type: String
 )
 
+data class ResultGetHotSongsItem(
+    val available_at: String,
+    val channel: ChannelForSong,
+    val channel_id: String,
+    val end: Int,
+    val id: Int,
+    val name: String,
+    val original_artist: String,
+    val score: Double,
+    val start: Int,
+    val video_id: String
+)
+data class ChannelForSong(
+    val english_name: String,
+    val name: String,
+    val photo: String
+)
+
+// Response에서 쓸만한 정보들만 추출한 객체
+// 홀로라이브 생방송 정보 객체
 data class HoloLiveOnAirInfo(
     val url : String,
     val startTime : String,
     val category : String,
     val name : String
+)
+
+data class HotSongs(
+    val name : List<String>,
+    val videoLink : List<String>,
+    val startTime : List<Long>,
+    val endTime : List<Int>
 )
 
 interface API {
@@ -55,23 +82,12 @@ interface API {
         @Query("topic") topic : String? = "",
         @Query("type") type : String? = null
     ): Call<List<ResultGetLiveItem>>
-}
 
-// onResponse Callback을 위한 옵저버 패턴 사용함.
-interface EventListener {
-    fun onLiveReceived(liveInfo : MutableList<HoloLiveOnAirInfo>) : MutableList<HoloLiveOnAirInfo>
-}
-
-object InfoRecevier {
-    private var liveInfo =  mutableListOf<HoloLiveOnAirInfo>()
-
-    fun setLiveInfo(liveInfo :MutableList<HoloLiveOnAirInfo> ) {
-        this.liveInfo = liveInfo
-    }
-
-    fun getLiveInfo() : MutableList<HoloLiveOnAirInfo> {
-        return this.liveInfo
-    }
+    @GET("songs/hot")
+    fun getHotSongs(
+        @Header("X-APIKEY") apiKey : String,
+        @Query("org") org : String
+        ) : Call<List<ResultGetHotSongsItem>>
 }
 
 object HoloDexRequest {
@@ -97,4 +113,48 @@ object HoloDexRequest {
         }
         return hololive
     }
+
+    suspend fun getHotSongs() : HotSongs {
+        val response = api.getHotSongs(API_KEY,org = "Hololive").awaitResponse()
+        val data = response.body()
+
+        val names = mutableListOf<String>()
+        val videoLinks = mutableListOf<String>()
+        val startTimes = mutableListOf<Long>()
+        val endTimes = mutableListOf<Int>()
+
+        for(song in data.orEmpty()) {
+            val videoLink : String = getVideoLink(song.video_id, song.start)
+            names.add(song.name)
+            videoLinks.add(videoLink)
+            startTimes.add(song.start.toLong())
+            endTimes.add(song.end)
+            //hotSongs.add(HotSongs(song.name, videoLink))
+        }
+
+        val hotSongs = HotSongs(names,videoLinks,startTimes,endTimes)
+
+        return hotSongs
+    }
+
+    private fun getVideoLink(video_id : String,startTime : Int) : String {
+        val YOUTUBE_VIDEO_BASE_URL = "https://www.youtube.com/watch"
+        val startTimeForLink : String = getStartTimeForLink(startTime)
+        val videoLink : String = YOUTUBE_VIDEO_BASE_URL + "?v=${video_id}#t=${startTimeForLink}"
+
+        return videoLink
+    }
+
+    private fun getStartTimeForLink(startTime : Int) : String {
+        val MINUTE = 60
+        val startTimeMinute = startTime / MINUTE
+        val startTimeSeconds = startTime - (startTimeMinute * MINUTE)
+        val startTimeForLink : String = startTimeMinute.toString() + "m" + startTimeSeconds.toString() + "s"
+
+        return startTimeForLink
+    }
+}
+
+suspend fun main() {
+    HoloDexRequest.getHotSongs()
 }

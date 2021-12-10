@@ -6,7 +6,7 @@ import kotlin.concurrent.timerTask
 fun main() {
 
 
-    Timer(true).schedule(timerTask{
+    Timer(false).schedule(timerTask{
         println("ㅎㅇ")
     },1000)
 }

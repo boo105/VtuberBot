@@ -1,5 +1,6 @@
-import Music.TrackScheduler
+import Music.*
 import com.google.gson.Gson
+import discord4j.common.store.action.gateway.MessageDeleteBulkAction
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.`object`.VoiceState
@@ -7,16 +8,18 @@ import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.event.domain.lifecycle.ReadyEvent
+import discord4j.core.event.domain.message.MessageBulkDeleteEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.spec.EmbedCreateSpec
-import discord4j.core.spec.VoiceChannelJoinSpec
+import discord4j.core.event.domain.message.MessageDeleteEvent
+import discord4j.core.spec.*
+import discord4j.discordjson.json.gateway.MessageDelete
+import discord4j.discordjson.json.gateway.MessageDeleteBulk
 import discord4j.rest.util.Color
 import kotlinx.coroutines.runBlocking
 import reactor.core.publisher.Mono
 import java.io.File
 import java.time.Instant
 import java.util.*
-import Music.*
 
 
 data class ClientToken(val id : String, val secret : String, val token : String)
@@ -50,12 +53,26 @@ fun botJoin(event : MessageCreateEvent) {
     }
 }
 
+fun botLeave(event : MessageCreateEvent) {
+    val member: Member? = event.member.orElse(null)
+    member?.let {
+        val voiceState: VoiceState? = it.getVoiceState().block()
+        voiceState?.let {
+            val channel = it.channel.block()
+            val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(MusicManager.getAudioProvider())
+            channel.join(spec).block().disconnect().block()
+        }
+    }
+}
+
 fun main(args : Array<String>) {
     val clientInfoString = File("./src/main/resources/ClientToken.json").readText(Charsets.UTF_8)
     val clientInfo = Gson().fromJson(clientInfoString, ClientToken::class.java)
 
     val token = clientInfo.token
     val client = DiscordClient.create(token)
+
+    var preBotMessage : Message? = null
 
     val login = client.withGateway { gateway: GatewayDiscordClient ->
         // ReadyEvent
@@ -109,18 +126,70 @@ fun main(args : Array<String>) {
                 val hotSongs = runBlocking {
                     return@runBlocking HoloDexRequest.getHotSongs()
                 }
-                MusicManager.playSong(hotSongs)
-                println(hotSongs.videoLink[1])
-                println(hotSongs.startTime[1])
-                println(hotSongs.endTime[1])
+
+                MusicManager.playHotSongs(hotSongs)
             }
 
             if (message.content.contains("!play", ignoreCase = true)) {
                 val commandSplit = message.content.split("!play")
                 val url = commandSplit[1].replace(" ","")
                 botJoin(event)
-
                 MusicManager.playSongWithYoutubeLink(url)
+            }
+
+            if (message.content.contains("!info", ignoreCase = true)) {
+                preBotMessage?.let {
+                    it.delete().block()
+                    preBotMessage = null
+                }
+                val musicInfo = MusicManager.getCurrentMusicInfo()
+
+                val embed : EmbedCreateSpec = EmbedCreateSpec.builder()
+                    .color(Color.CYAN)
+                    .title("노래 정보")
+                    .addField("노래 제목", "${musicInfo?.name}", false)
+                    .addField("아티스트", "${musicInfo?.artist}", false)
+                    .build()
+
+                preBotMessage = message.channel.block().createMessage(embed).block()
+//                return@on message.channel.flatMap<Message> { channel: MessageChannel ->
+//                    channel.createMessage(embed)
+//                }
+            }
+
+            if (message.content.contains("!list", ignoreCase = true)) {
+                preBotMessage?.let {
+                    it.delete().block()
+                    preBotMessage = null
+                }
+
+                val playList = MusicManager.getPlayList()
+
+                val embed : EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+                    .color(Color.CYAN)
+                    .title("플레이 리스트")
+
+                var nameText = ""
+                var artistText = ""
+                for(music in playList) {
+                    nameText += music.name + "\n"
+                    artistText += music.artist + "\n"
+                }
+                embed.addField("노래 제목", nameText, true)
+                    .addField("아티스트", artistText, true)
+
+                preBotMessage = message.channel.block().createMessage(embed.build()).block()
+//                return@on message.channel.flatMap<Message> { channel: MessageChannel ->
+//                        channel.createMessage(embed.build())
+//                }
+            }
+
+            if (message.content.contains("!skip", ignoreCase = true)) {
+                MusicManager.skip()
+            }
+
+            if (message.content.contains("!leave", ignoreCase = true)) {
+                botLeave(event)
             }
 
             Mono.empty()
@@ -128,5 +197,6 @@ fun main(args : Array<String>) {
 
         printOnLogin.and(handlePingCommand)
     }
+
     login.block()
 }
