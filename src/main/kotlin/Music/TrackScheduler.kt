@@ -5,6 +5,8 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.concurrent.timerTask
 
@@ -12,30 +14,38 @@ import kotlin.concurrent.timerTask
 class TrackScheduler(private val player: AudioPlayer) : AudioLoadResultHandler {
     var startPositions : Long? = null
     var endPositions : Int? = null
+    private var timer = Timer(true)
 
     override fun trackLoaded(track: AudioTrack) {
         player.playTrack(track)
+        val startTime = LocalTime.now()
 
         startPositions?.let {
             val startPosition = it * 1000
             endPositions?.let {
-                val endPosition = (it * 1000) + 3000   // 3000ms 는 부자연스럽게 끝나는거 방지용
+                val endPosition = (it * 1000) + 2000   // 3000ms 는 부자연스럽게 끝나는거 방지용
                 val duration = endPosition - startPosition
-
                 player.playingTrack.position = startPosition
 
+                val MIN = duration / 60 / 1000
+                val SECONDS = (duration / 1000) - (MIN * 60)
+                println("예상 소요시간 : ${MIN}분 ${SECONDS}초")
+
                 // 이거 새로 쓰레드 생성하는거니까 데몬쓰레드로 바꾸든 쓰레드 해제하고 하든 하셈
-                Timer(true).schedule(timerTask{
-                    // 나중에 스킵할 경우를 생각해 현재 Track이랑 같은지 확인? 하고 해야함
+                timer = Timer(true)
+                timer.schedule(timerTask{
                     player.stopTrack()
                     startPositions = null
                     endPositions = null
-                    MusicManager.playNext()
+                    val formatter = DateTimeFormatter.ofPattern("mm분 ss초")
+                    val endTime = LocalTime.now()
+                    val realTime = endTime.minusHours(startTime.hour.toLong()).minusMinutes(startTime.minute.toLong()).minusSeconds(startTime.second.toLong())
+                    println("실제 소요시간 : ${realTime.format(formatter)}")
                     println("종료 성공!")
+                    MusicManager.playNext()
                 },duration)
             }
         }
-        println("재생 성공!")
     }
 
     override fun playlistLoaded(playlist: AudioPlaylist) {
@@ -48,5 +58,10 @@ class TrackScheduler(private val player: AudioPlayer) : AudioLoadResultHandler {
 
     override fun loadFailed(exception: FriendlyException) {
         // LavaPlayer could not parse an audio source for some reason
+    }
+
+    fun timerClear() {
+        timer.cancel()
+        timer.purge()
     }
 }

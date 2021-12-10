@@ -1,7 +1,7 @@
 package Music
 
+import Data.MusicInfo
 import LavaPlayerAudioProvider
-import MusicInfo
 import com.sedmelluq.discord.lavaplayer.format.AudioDataFormat
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
@@ -67,9 +67,8 @@ object MusicManager {
             playList.add(music)
         } ?:
             println("음악 실행")
+            println(music.name)
             currentMusic = music
-            println(music.startTime)
-            println(music.endTime)
             scheduler.startPositions = music.startTime
             scheduler.endPositions = music.endTime
             playerManager.loadItem(music.videoLink, scheduler)
@@ -83,6 +82,7 @@ object MusicManager {
 
     fun skip() {
         player.stopTrack()
+        scheduler.timerClear()
         playNext()
     }
 
@@ -98,8 +98,10 @@ object MusicManager {
 
     }
 
-    fun leave() {
-
+    fun quit() {
+        currentMusic = null
+        player.stopTrack()
+        playList.clear()
+        scheduler.timerClear()
     }
-
 }

@@ -1,68 +1,13 @@
+import Data.HoloLiveOnAirInfo
+import Data.MusicInfo
+import Data.ResultGetHotSongsItem
+import Data.ResultGetLiveItem
 import com.google.gson.GsonBuilder
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
-
-// response 파라미터
-data class ResultGetLiveItem(
-    val available_at: String,
-    val channel: Channel,
-    val duration: Int,
-    val id: String,
-    val live_viewers: Int,
-    val published_at: String,
-    val start_actual: String,
-    val start_scheduled: String,
-    val status: String,
-    val title: String,
-    val topic_id: String?,
-    val type: String
-)
-data class Channel(
-    val english_name: String,
-    val id: String,
-    val name: String,
-    val photo: String,
-    val type: String
-)
-
-data class ResultGetHotSongsItem(
-    val available_at: String,
-    val channel: ChannelForSong,
-    val channel_id: String,
-    val end: Int,
-    val id: Int,
-    val name: String,
-    val original_artist: String,
-    val score: Double,
-    val start: Int,
-    val video_id: String
-)
-data class ChannelForSong(
-    val english_name: String,
-    val name: String,
-    val photo: String
-)
-
-// Response에서 쓸만한 정보들만 추출한 객체
-// 홀로라이브 생방송 정보 객체
-data class HoloLiveOnAirInfo(
-    val url : String,
-    val startTime : String,
-    val category : String,
-    val name : String
-)
-
-data class MusicInfo(
-    val name : String,
-    val artist : String,
-    val videoLink : String,
-    val startTime : Long? = null,
-    val endTime : Int? = null,
-    val duration : Int? = null
-)
 
 interface API {
     @GET("live")
@@ -146,8 +91,4 @@ object HoloDexRequest {
 
         return startTimeForLink
     }
-}
-
-suspend fun main() {
-    HoloDexRequest.getHotSongs()
 }

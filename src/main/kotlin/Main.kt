@@ -1,28 +1,22 @@
+import Data.ClientToken
 import Music.*
 import com.google.gson.Gson
-import discord4j.common.store.action.gateway.MessageDeleteBulkAction
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.`object`.VoiceState
 import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.MessageChannel
+import discord4j.core.`object`.entity.channel.VoiceChannel
 import discord4j.core.event.domain.lifecycle.ReadyEvent
-import discord4j.core.event.domain.message.MessageBulkDeleteEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.event.domain.message.MessageDeleteEvent
 import discord4j.core.spec.*
-import discord4j.discordjson.json.gateway.MessageDelete
-import discord4j.discordjson.json.gateway.MessageDeleteBulk
 import discord4j.rest.util.Color
 import kotlinx.coroutines.runBlocking
 import reactor.core.publisher.Mono
 import java.io.File
 import java.time.Instant
 import java.util.*
-
-
-data class ClientToken(val id : String, val secret : String, val token : String)
 
 fun helpCommand(message : Message) : Mono<Message> {
     return message.channel.flatMap<Message> { channel: MessageChannel ->
@@ -41,28 +35,34 @@ fun helpCommand(message : Message) : Mono<Message> {
     }
 }
 
-fun botJoin(event : MessageCreateEvent) {
+fun getVoiceChannel(event : MessageCreateEvent) : VoiceChannel? {
     val member: Member? = event.member.orElse(null)
-    member?.let {
+    val voiceChannel = member?.let {
         val voiceState: VoiceState? = it.getVoiceState().block()
-        voiceState?.let {
-            val channel = it.channel.block()
-            val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(MusicManager.getAudioProvider())
-            channel.join(spec).block()
+        val voiceChannel = voiceState?.let {
+            it.channel.block()
         }
+
+        return@let voiceChannel
     }
+
+    return voiceChannel
 }
 
+fun botJoin(event : MessageCreateEvent) {
+    val voiceChannel = getVoiceChannel(event)
+    val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(MusicManager.getAudioProvider())
+    voiceChannel?.join(spec)?.block()
+}
+
+// join 이후 disconnect가 아니고 바로 disconnect 하기로 하자....
 fun botLeave(event : MessageCreateEvent) {
-    val member: Member? = event.member.orElse(null)
-    member?.let {
-        val voiceState: VoiceState? = it.getVoiceState().block()
-        voiceState?.let {
-            val channel = it.channel.block()
-            val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(MusicManager.getAudioProvider())
-            channel.join(spec).block().disconnect().block()
-        }
+    val voiceChannel = getVoiceChannel(event)
+    val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(MusicManager.getAudioProvider())
+    voiceChannel?.let {
+        it.join(spec).block().disconnect().block()
     }
+    MusicManager.quit()
 }
 
 fun main(args : Array<String>) {
