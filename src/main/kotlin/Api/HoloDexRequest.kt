@@ -82,7 +82,7 @@ object HoloDexRequest {
     }
 
     suspend fun getPlayList(channelId: String) : MutableList<MusicInfo> {
-        val response = api.getPlayList(API_KEY, RequestPlayList(channelId,10)).awaitResponse()
+        val response = api.getPlayList(API_KEY, RequestPlayList(channelId)).awaitResponse()
         val data = response.body()
         val playList = mutableListOf<MusicInfo>()
 
@@ -95,6 +95,7 @@ object HoloDexRequest {
         return playList
     }
 
+    // 이거 startTime 분 초 형식으로 안줘도 되고 초 형식으로만 던져도 적용되는거 확인했으니까 그냥 s로 넣는게 속도 빠를듯
     private fun getVideoLink(video_id : String,startTime : Int) : String {
         val YOUTUBE_VIDEO_BASE_URL = "https://www.youtube.com/watch"
         val startTimeForLink : String = getStartTimeForLink(startTime)

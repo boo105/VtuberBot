@@ -60,7 +60,13 @@ class TrackScheduler(private val player: AudioPlayer) : AudioLoadResultHandler {
         // LavaPlayer could not parse an audio source for some reason
     }
 
-    fun timerClear() {
+    fun clear() {
+        startPositions = null
+        endPositions = null
+        timerClear()
+    }
+
+    private fun timerClear() {
         timer.cancel()
         timer.purge()
     }

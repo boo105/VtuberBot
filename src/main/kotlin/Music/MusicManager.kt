@@ -71,6 +71,7 @@ object MusicManager {
             currentMusic = music
             scheduler.startPositions = music.startTime
             scheduler.endPositions = music.endTime
+            println(music.videoLink)
             playerManager.loadItem(music.videoLink, scheduler)
     }
 
@@ -82,7 +83,7 @@ object MusicManager {
 
     fun skip() {
         player.stopTrack()
-        scheduler.timerClear()
+        scheduler.clear()
         playNext()
     }
 
@@ -94,14 +95,10 @@ object MusicManager {
         return playList
     }
 
-    fun join() {
-
-    }
-
     fun quit() {
         currentMusic = null
         player.stopTrack()
         playList.clear()
-        scheduler.timerClear()
+        scheduler.clear()
     }
 }
