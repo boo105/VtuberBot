@@ -54,10 +54,10 @@ object MusicManager {
         play(MusicInfo("아직 미구현","미구현",link,null,null,null))
     }
 
-    fun playHotSongs(hotSongs : List<MusicInfo>) {
-        play(hotSongs[0])
-        for(i in 1..(hotSongs.size)) {
-            playList.add(hotSongs[i])
+    fun playSongs(songs : List<MusicInfo>) {
+        play(songs[0])
+        for(i in 1..(songs.size)) {
+            playList.add(songs[i])
         }
     }
 

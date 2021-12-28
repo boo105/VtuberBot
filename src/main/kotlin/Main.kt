@@ -1,13 +1,11 @@
+import Data.ChannelID
 import Data.ClientToken
 import Music.*
 import com.google.gson.Gson
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
-import discord4j.core.`object`.VoiceState
-import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.MessageChannel
-import discord4j.core.`object`.entity.channel.VoiceChannel
 import discord4j.core.event.domain.lifecycle.ReadyEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.*
@@ -16,7 +14,6 @@ import kotlinx.coroutines.runBlocking
 import reactor.core.publisher.Mono
 import java.io.File
 import java.time.Instant
-import java.util.*
 
 fun helpCommand(message : Message) : Mono<Message> {
     return message.channel.flatMap<Message> { channel: MessageChannel ->
@@ -24,45 +21,19 @@ fun helpCommand(message : Message) : Mono<Message> {
         val embed: EmbedCreateSpec = EmbedCreateSpec.builder()
             .color(Color.CYAN)
             .title("도움말")
-            .url("")
-            .author("I LOVE 민초", "", "https://i.imgur.com/F9BhEoz.png")
-            .addField("Command Help", "추후 도움말 작성 예정", false)
-            .addField("\u200B", "\u200B", false)
-            .timestamp(Instant.now())
+            .addField("!생방송","현재 홀로라이브 생방송 목록",false)
+            .addField("!인기차트","홀로라이브 인기차트 플레이리스트",false)
+            .addField("!홀로라이브","홀로라이브 버튜버 목록",false)
+            .addField("!홀로라이브 번호","홀로라이브 버튜버 플레이리스트 재생",false)
+            .addField("!play 링크","유튜브 재생",false)
+            .addField("!list","노래 대기열 정보",false)
+            .addField("!info","현재 노래 정보",false)
+            .addField("!skip","현재 노래 스킵",false)
+            .addField("!leave","봇 퇴장",false)
             .build()
 
         channel.createMessage(embed)
     }
-}
-
-fun getVoiceChannel(event : MessageCreateEvent) : VoiceChannel? {
-    val member: Member? = event.member.orElse(null)
-    val voiceChannel = member?.let {
-        val voiceState: VoiceState? = it.getVoiceState().block()
-        val voiceChannel = voiceState?.let {
-            it.channel.block()
-        }
-
-        return@let voiceChannel
-    }
-
-    return voiceChannel
-}
-
-fun botJoin(event : MessageCreateEvent) {
-    val voiceChannel = getVoiceChannel(event)
-    val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(MusicManager.getAudioProvider())
-    voiceChannel?.join(spec)?.block()
-}
-
-// join 이후 disconnect가 아니고 바로 disconnect 하기로 하자....
-fun botLeave(event : MessageCreateEvent) {
-    val voiceChannel = getVoiceChannel(event)
-    val spec : VoiceChannelJoinSpec = VoiceChannelJoinSpec.create().withProvider(MusicManager.getAudioProvider())
-    voiceChannel?.let {
-        it.join(spec).block().disconnect().block()
-    }
-    MusicManager.quit()
 }
 
 fun main(args : Array<String>) {
@@ -73,6 +44,15 @@ fun main(args : Array<String>) {
     val client = DiscordClient.create(token)
 
     var preBotMessage : Message? = null
+
+    val holoiveChannelIdList = listOf(
+        ChannelID("Hoshimachi Suisei","UC5CwaMl1eIgY8h02uZw7u8A"),
+        ChannelID("Mori Calliope", "UCL_qhgtOy0dy1Agp8vkySQg"),
+        ChannelID("Tokoyami Towa","UC1uv2Oq6kNxgATlCiez59hw"),
+        ChannelID("Tsunomaki Watame","UCqm3BQLlJfvkTsX_hvm0UmA"),
+        ChannelID("IRyS","UC8rcEBzJSleTkf_-agPM20g"),
+        ChannelID("Shirogane Noel","UCdyqAaZDKHXg4Ahi7VENThQ")
+    )
 
     val login = client.withGateway { gateway: GatewayDiscordClient ->
         // ReadyEvent
@@ -121,19 +101,20 @@ fun main(args : Array<String>) {
             }
 
             if (message.content.equals("!인기차트", ignoreCase = true)) {
-                botJoin(event)
+                BotVoiceChannelController.join(event)
 
                 val hotSongs = runBlocking {
                     return@runBlocking HoloDexRequest.getHotSongs()
                 }
 
-                MusicManager.playHotSongs(hotSongs)
+                MusicManager.playSongs(hotSongs)
             }
 
             if (message.content.contains("!play", ignoreCase = true)) {
                 val commandSplit = message.content.split("!play")
                 val url = commandSplit[1].replace(" ","")
-                botJoin(event)
+                BotVoiceChannelController.join(event)
+
                 MusicManager.playSongWithYoutubeLink(url)
             }
 
@@ -152,9 +133,6 @@ fun main(args : Array<String>) {
                     .build()
 
                 preBotMessage = message.channel.block().createMessage(embed).block()
-//                return@on message.channel.flatMap<Message> { channel: MessageChannel ->
-//                    channel.createMessage(embed)
-//                }
             }
 
             if (message.content.contains("!list", ignoreCase = true)) {
@@ -179,9 +157,41 @@ fun main(args : Array<String>) {
                     .addField("아티스트", artistText, true)
 
                 preBotMessage = message.channel.block().createMessage(embed.build()).block()
-//                return@on message.channel.flatMap<Message> { channel: MessageChannel ->
-//                        channel.createMessage(embed.build())
-//                }
+            }
+
+            if (message.content.contains("!홀로라이브", ignoreCase = true)) {
+                preBotMessage?.let {
+                    it.delete().block()
+                    preBotMessage = null
+                }
+
+                val command = message.content.split(" ")
+                if (command.size != 2) {
+                    val embed: EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+                        .color(Color.CYAN)
+                        .title("홀로라이브 목록")
+
+                    var nameText = ""
+                    var indexText = ""
+                    for (i in 1..holoiveChannelIdList.size)
+                        indexText += i.toString() + ".\n"
+
+                    for (channel in holoiveChannelIdList)
+                        nameText += channel.name + "\n"
+
+                    embed.addField("No.", indexText, true)
+                        .addField("Name", nameText, true)
+                    preBotMessage = message.channel.block().createMessage(embed.build()).block()
+                }
+                else if (command.size.equals(2)) {
+                    val playList = runBlocking {
+                        val channelID = holoiveChannelIdList[command[1].toInt() - 1].channelId
+                        return@runBlocking HoloDexRequest.getPlayList(channelID)
+                    }
+
+                    BotVoiceChannelController.join(event)
+                    MusicManager.playSongs(playList)
+                }
             }
 
             if (message.content.contains("!skip", ignoreCase = true)) {
@@ -189,14 +199,12 @@ fun main(args : Array<String>) {
             }
 
             if (message.content.contains("!leave", ignoreCase = true)) {
-                botLeave(event)
+                BotVoiceChannelController.leave()
             }
-
             Mono.empty()
         }.then()
 
         printOnLogin.and(handlePingCommand)
     }
-
     login.block()
 }

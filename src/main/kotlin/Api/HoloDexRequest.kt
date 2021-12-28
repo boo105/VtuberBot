@@ -1,13 +1,9 @@
-import Data.HoloLiveOnAirInfo
-import Data.MusicInfo
-import Data.ResultGetHotSongsItem
-import Data.ResultGetLiveItem
+import Data.*
 import com.google.gson.GsonBuilder
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.Query
+import retrofit2.http.*
+
 
 interface API {
     @GET("live")
@@ -34,8 +30,18 @@ interface API {
     fun getHotSongs(
         @Header("X-APIKEY") apiKey : String,
         @Query("org") org : String
-        ) : Call<List<ResultGetHotSongsItem>>
+    ) : Call<List<ResultGetHotSongsItem>>
+
+    @POST("songs/latest")
+    @Headers("accept: application/json",
+        "content-type: application/json"
+    )
+    fun getPlayList(
+        @Header("X-APIKEY") apiKey : String,
+        @Body requestPlayList : RequestPlayList
+    ) : Call<List<ResultGetPlayListItemItem>>
 }
+
 
 object HoloDexRequest {
     private val API_KEY = "c70cd6cf-91d5-4923-bdcb-62064609c040"
@@ -73,6 +79,20 @@ object HoloDexRequest {
         }
 
         return hotSongs
+    }
+
+    suspend fun getPlayList(channelId: String) : MutableList<MusicInfo> {
+        val response = api.getPlayList(API_KEY, RequestPlayList(channelId,10)).awaitResponse()
+        val data = response.body()
+        val playList = mutableListOf<MusicInfo>()
+
+        for(song in data.orEmpty()) {
+            val videoLink : String = getVideoLink(song.video_id, song.start)
+            println("song name : ${song.name}, name : ${song.channel.english_name}, start : ${song.start.toLong()}, end : ${song.end}")
+            playList.add(MusicInfo(song.name,song.channel.english_name ,videoLink, song.start.toLong(), song.end))
+        }
+
+        return playList
     }
 
     private fun getVideoLink(video_id : String,startTime : Int) : String {

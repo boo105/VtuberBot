@@ -41,3 +41,19 @@ data class ChannelForSong(
     val name: String,
     val photo: String
 )
+
+data class ResultGetPlayListItemItem(
+    val amUrl: String,
+    val art: String,
+    val available_at: String,
+    val channel: ChannelForSong,
+    val channel_id: String,
+    val creator_id: String,
+    val end: Int,
+    val id: Int,
+    val itunesid: Int,
+    val name: String,
+    val original_artist: String,
+    val start: Int,
+    val video_id: String
+)
