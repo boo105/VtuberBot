@@ -7,3 +7,23 @@ https://holodex.stoplight.io/
 
 API 문서에 안나와 있는 API URL 나와있는 소스코드    
 https://github.com/HolodexNet/Holodex/blob/dev/src/utils/backend-api.ts
+
+
+## 본인이 사용할 봇을 등록하는 법
+```
+./src/main/resources/ClientToken.json
+```
+해당 경로에 파일을 생성한 후 
+```Json
+{
+  "id" : "",
+  "secret" : "",
+  "token" : ""
+}
+```
+위와 같은 양식으로 입력하면 봇 등록이 완료됨.
+
++
+
+현재는 일단 HoloDex API 키가 코드 내부에 있는데
+이후 json 파일로 똑같이 관리할 예정
