@@ -23,7 +23,7 @@ https://github.com/HolodexNet/Holodex/blob/dev/src/utils/backend-api.ts
 ```
 위와 같은 양식으로 입력하면 봇 등록이 완료됨.
 
-+
-
-현재는 일단 HoloDex API 키가 코드 내부에 있는데
-이후 json 파일로 똑같이 관리할 예정
+  
+  
+현재는 일단 HoloDex API 키가 코드 내부에 있는데  
+이후 json 파일로 똑같이 관리할 예정  
