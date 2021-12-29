@@ -22,11 +22,11 @@ class TrackScheduler(private val player: AudioPlayer) : AudioLoadResultHandler {
 
         startPositions?.let {
             val startPosition = it * 1000
+            player.playingTrack.position = startPosition
+
             endPositions?.let {
                 val endPosition = (it * 1000) + 2000   // 3000ms 는 부자연스럽게 끝나는거 방지용
                 val duration = endPosition - startPosition
-                player.playingTrack.position = startPosition
-
                 val MIN = duration / 60 / 1000
                 val SECONDS = (duration / 1000) - (MIN * 60)
                 println("예상 소요시간 : ${MIN}분 ${SECONDS}초")

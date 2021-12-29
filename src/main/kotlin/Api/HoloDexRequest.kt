@@ -1,4 +1,5 @@
 import Data.*
+import Music.LinkManager
 import com.google.gson.GsonBuilder
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
@@ -74,7 +75,7 @@ object HoloDexRequest {
         val hotSongs = mutableListOf<MusicInfo>()
 
         for(song in data.orEmpty()) {
-            val videoLink : String = getVideoLink(song.video_id, song.start)
+            val videoLink : String = LinkManager.getVideoLink(song.video_id, song.start)
             hotSongs.add(MusicInfo(song.name,song.channel.english_name ,videoLink, song.start.toLong(), song.end))
         }
 
@@ -87,29 +88,11 @@ object HoloDexRequest {
         val playList = mutableListOf<MusicInfo>()
 
         for(song in data.orEmpty()) {
-            val videoLink : String = getVideoLink(song.video_id, song.start)
+            val videoLink : String = LinkManager.getVideoLink(song.video_id, song.start)
             println("song name : ${song.name}, name : ${song.channel.english_name}, start : ${song.start.toLong()}, end : ${song.end}")
             playList.add(MusicInfo(song.name,song.channel.english_name ,videoLink, song.start.toLong(), song.end))
         }
 
         return playList
-    }
-
-    // 이거 startTime 분 초 형식으로 안줘도 되고 초 형식으로만 던져도 적용되는거 확인했으니까 그냥 s로 넣는게 속도 빠를듯
-    private fun getVideoLink(video_id : String,startTime : Int) : String {
-        val YOUTUBE_VIDEO_BASE_URL = "https://www.youtube.com/watch"
-        val startTimeForLink : String = getStartTimeForLink(startTime)
-        val videoLink : String = YOUTUBE_VIDEO_BASE_URL + "?v=${video_id}#t=${startTimeForLink}"
-
-        return videoLink
-    }
-
-    private fun getStartTimeForLink(startTime : Int) : String {
-        val MINUTE = 60
-        val startTimeMinute = startTime / MINUTE
-        val startTimeSeconds = startTime - (startTimeMinute * MINUTE)
-        val startTimeForLink : String = startTimeMinute.toString() + "m" + startTimeSeconds.toString() + "s"
-
-        return startTimeForLink
     }
 }

@@ -115,7 +115,8 @@ fun main(args : Array<String>) {
                 val url = commandSplit[1].replace(" ","")
                 BotVoiceChannelController.join(event)
 
-                MusicManager.playSongWithYoutubeLink(url)
+                val music = LinkManager.getMusicForYoutubeLink(url)
+                MusicManager.play(music)
             }
 
             if (message.content.contains("!info", ignoreCase = true)) {

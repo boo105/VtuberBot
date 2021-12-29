@@ -49,11 +49,6 @@ object MusicManager {
         return provider
     }
 
-    fun playSongWithYoutubeLink(link : String) {
-        println(link)
-        play(MusicInfo("아직 미구현","미구현",link,null,null,null))
-    }
-
     fun playSongs(songs : List<MusicInfo>) {
         play(songs[0])
         for(i in 1..(songs.size)) {
