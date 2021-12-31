@@ -15,26 +15,12 @@ import reactor.core.publisher.Mono
 import java.io.File
 import java.time.Instant
 
-fun helpCommand(message : Message) : Mono<Message> {
-    return message.channel.flatMap<Message> { channel: MessageChannel ->
-        // 추후 embed 전용 클래스를 따로 만들어서 설정하기
-        val embed: EmbedCreateSpec = EmbedCreateSpec.builder()
-            .color(Color.CYAN)
-            .title("도움말")
-            .addField("!생방송","현재 홀로라이브 생방송 목록",false)
-            .addField("!인기차트","홀로라이브 인기차트 플레이리스트",false)
-            .addField("!홀로라이브","홀로라이브 버튜버 목록",false)
-            .addField("!홀로라이브 번호","홀로라이브 버튜버 플레이리스트 재생",false)
-            .addField("!play 링크","유튜브 재생",false)
-            .addField("!list","노래 대기열 정보",false)
-            .addField("!info","현재 노래 정보",false)
-            .addField("!skip","현재 노래 스킵",false)
-            .addField("!leave","봇 퇴장",false)
-            .build()
-
-        channel.createMessage(embed)
-    }
-}
+/*
+* 해야 할거
+* 이전 메세지 삭제 코드 계속 중복 되니까 메세지 관리하는 객체를 하나 만들기!!!!!!
+* 사용자 즐겨찾기 목록 ( 자기가 즐겨찾기 추가 하는데 사용자별로 존재)
+* 커맨드(명령어) 목록 리팩토링
+* */
 
 fun main(args : Array<String>) {
     val clientInfoString = File("./src/main/resources/ClientToken.json").readText(Charsets.UTF_8)
@@ -45,13 +31,31 @@ fun main(args : Array<String>) {
 
     var preBotMessage : Message? = null
 
+    // 나중에 JP, EN 등등 따로 분리 해보자
+    // 그리고 이름 순대로 정렬 해야할 듯
     val holoiveChannelIdList = listOf(
         ChannelID("Hoshimachi Suisei","UC5CwaMl1eIgY8h02uZw7u8A"),
         ChannelID("Mori Calliope", "UCL_qhgtOy0dy1Agp8vkySQg"),
         ChannelID("Tokoyami Towa","UC1uv2Oq6kNxgATlCiez59hw"),
         ChannelID("Tsunomaki Watame","UCqm3BQLlJfvkTsX_hvm0UmA"),
         ChannelID("IRyS","UC8rcEBzJSleTkf_-agPM20g"),
-        ChannelID("Shirogane Noel","UCdyqAaZDKHXg4Ahi7VENThQ")
+        ChannelID("Shirogane Noel","UCdyqAaZDKHXg4Ahi7VENThQ"),
+        ChannelID("Murasaki Shion","UCXTpFs_3PqI41qX2d9tL2Rw"),
+        ChannelID("Minato Aqua","UC1opHUrw8rvnsadT-iGp7Cg"),
+        ChannelID("Oozora Subaru","UCvzGlP9oQwU--Y0r9id_jnA"),
+        ChannelID("Nekomata Okayu","UCvaTdHTWBGv3MKj3KVqJVCw"),
+        ChannelID("Shirakami Fubuki","UCdn5BQ06XqgXoAxIhbqw5Rg"),
+        ChannelID("Usada Pekora","UC1DCedRgGHBdm81E1llLhOQ"),
+        ChannelID("Uruha Rushia","UCl_gCybOJRIgOXw6Qb4qJzQ"),
+        ChannelID("Houshou Marine","UCCzUftO8KOVkV4wQG1vkUvg"),
+        ChannelID("Momosuzu Nene","UCAWSyEs_Io8MtpY3m-zqILA"),
+        ChannelID("La+ Darknesss","UCENwRMx5Yh42zWpzURebzTw"),
+        ChannelID("Hakui Koyori","UC6eWCld0KwmyHFbAqK3V-Rw"),
+        ChannelID("Sakamata Chloe","UCIBY1ollUsauvVi4hW4cumw"),
+        ChannelID("Gawr Gura","UCoSrY_IQQVpmIRZ9Xf-y93g"),
+        ChannelID("Watson Amelia","UCyl1z3jo3XHR1riLFKG5UAg"),
+        ChannelID("Takanashi Kiara","UCHsx4Hqa-1ORjQTh9TYDhww"),
+        ChannelID("Ouro Kronii","UCmbs8T6MWqUHP1tIQvSgKrg")
     )
 
     val login = client.withGateway { gateway: GatewayDiscordClient ->
@@ -73,31 +77,23 @@ fun main(args : Array<String>) {
             }
 
             if (message.content.equals("!도움말", ignoreCase = true)) {
-                return@on helpCommand(message)
+                preBotMessage?.let {
+                    it.delete().block()
+                    preBotMessage = null
+                }
+
+                val helpEmbed = EmbedManager.getHelpEmbed()
+                preBotMessage = message.channel.block().createMessage(helpEmbed).block()
             }
 
-            // 이부분 추상화 나중에 하기 뮤직봇 듀토리얼에 interface 써서 명령어 실행부분 추상화 하는거 있음 보셈
             if (message.content.equals("!생방송", ignoreCase = true)) {
-                val liveInfo = runBlocking {
-                    val liveInfo = HoloDexRequest.getLive()
-                    return@runBlocking liveInfo
+                preBotMessage?.let {
+                    it.delete().block()
+                    preBotMessage = null
                 }
 
-                val embed : EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
-                    .color(Color.CYAN)
-                    .title("생방송 리스트")
-                    .timestamp(Instant.now())
-
-                for(streamer in liveInfo) {
-                    embed.addField(streamer.name,"${streamer.url}",true)
-                    embed.addField("Category","${streamer.category}\n${streamer.startTime}",true)
-                    embed.addField("\u200b", "\u200b",true)
-                }
-
-                return@on message.channel.flatMap<Message> { channel: MessageChannel ->
-                    channel.createMessage(embed.build())
-                    //channel.createMessage(*embedList.toTypedArray())
-                }
+                val liveListEmbed = EmbedManager.getLiveListEmbed()
+                preBotMessage = message.channel.block().createMessage(liveListEmbed).block()
             }
 
             if (message.content.equals("!인기차트", ignoreCase = true)) {
@@ -106,7 +102,6 @@ fun main(args : Array<String>) {
                 val hotSongs = runBlocking {
                     return@runBlocking HoloDexRequest.getHotSongs()
                 }
-
                 MusicManager.playSongs(hotSongs)
             }
 
@@ -124,16 +119,9 @@ fun main(args : Array<String>) {
                     it.delete().block()
                     preBotMessage = null
                 }
-                val musicInfo = MusicManager.getCurrentMusicInfo()
 
-                val embed : EmbedCreateSpec = EmbedCreateSpec.builder()
-                    .color(Color.CYAN)
-                    .title("노래 정보")
-                    .addField("노래 제목", "${musicInfo?.name}", false)
-                    .addField("아티스트", "${musicInfo?.artist}", false)
-                    .build()
-
-                preBotMessage = message.channel.block().createMessage(embed).block()
+                val currentMusicInfoEmbed = EmbedManager.getCurrentMusicInfoEmbed()
+                preBotMessage = message.channel.block().createMessage(currentMusicInfoEmbed).block()
             }
 
             if (message.content.contains("!list", ignoreCase = true)) {
@@ -142,22 +130,8 @@ fun main(args : Array<String>) {
                     preBotMessage = null
                 }
 
-                val playList = MusicManager.getPlayList()
-
-                val embed : EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
-                    .color(Color.CYAN)
-                    .title("플레이 리스트")
-
-                var nameText = ""
-                var artistText = ""
-                for(music in playList) {
-                    nameText += music.name + "\n"
-                    artistText += music.artist + "\n"
-                }
-                embed.addField("노래 제목", nameText, true)
-                    .addField("아티스트", artistText, true)
-
-                preBotMessage = message.channel.block().createMessage(embed.build()).block()
+                val musicQueueListEmbed = EmbedManager.getMusicQueueListEmbed()
+                preBotMessage = message.channel.block().createMessage(musicQueueListEmbed).block()
             }
 
             if (message.content.contains("!홀로라이브", ignoreCase = true)) {
@@ -168,21 +142,8 @@ fun main(args : Array<String>) {
 
                 val command = message.content.split(" ")
                 if (command.size != 2) {
-                    val embed: EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
-                        .color(Color.CYAN)
-                        .title("홀로라이브 목록")
-
-                    var nameText = ""
-                    var indexText = ""
-                    for (i in 1..holoiveChannelIdList.size)
-                        indexText += i.toString() + ".\n"
-
-                    for (channel in holoiveChannelIdList)
-                        nameText += channel.name + "\n"
-
-                    embed.addField("No.", indexText, true)
-                        .addField("Name", nameText, true)
-                    preBotMessage = message.channel.block().createMessage(embed.build()).block()
+                    val hololiveListEmbed = EmbedManager.getHoloLiveListEmbed(holoiveChannelIdList)
+                    preBotMessage = message.channel.block().createMessage(hololiveListEmbed).block()
                 }
                 else if (command.size.equals(2)) {
                     val playList = runBlocking {
