@@ -52,9 +52,9 @@ object EmbedManager {
 
         val currentMusicInfoEmbed : EmbedCreateSpec = EmbedCreateSpec.builder()
             .color(Color.CYAN)
-            .title("노래 정보")
-            .addField("노래 제목", "${musicInfo?.name}", false)
-            .addField("아티스트", "${musicInfo?.artist}", false)
+            .title(":notes: ${musicInfo.name}")
+            .url(musicInfo.videoLink)
+            .description("Artist : ${musicInfo.artist}")
             .build()
 
         return currentMusicInfoEmbed

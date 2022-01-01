@@ -104,8 +104,8 @@ object MusicManager {
         scheduler.clear()
     }
 
-    fun getCurrentMusicInfo() : MusicInfo? {
-        return currentMusic
+    fun getCurrentMusicInfo() : MusicInfo {
+        return currentMusic as MusicInfo
     }
 
     fun getPlayList() : List<MusicInfo> {

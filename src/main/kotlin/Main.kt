@@ -20,6 +20,7 @@ import java.time.Instant
 * 이전 메세지 삭제 코드 계속 중복 되니까 메세지 관리하는 객체를 하나 만들기!!!!!!
 * 사용자 즐겨찾기 목록 ( 자기가 즐겨찾기 추가 하는데 사용자별로 존재)
 * 커맨드(명령어) 목록 리팩토링
+* MusicQueue 보여주는 Embed에 url 달 방법 찾아보기!
 * */
 
 fun main(args : Array<String>) {
