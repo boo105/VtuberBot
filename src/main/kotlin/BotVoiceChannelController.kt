@@ -22,7 +22,7 @@ object BotVoiceChannelController {
     fun leave() {
         voiceConnection?.let {
             it.disconnect().block()
-            MusicManager.quit()
+            MusicManager.stop()
             clearVoiceChannel()
         }
     }

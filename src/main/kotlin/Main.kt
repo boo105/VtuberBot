@@ -111,7 +111,16 @@ fun main(args : Array<String>) {
                 BotVoiceChannelController.join(event)
 
                 val music = LinkManager.getMusicForYoutubeLink(url)
-                MusicManager.play(music)
+                val playMode = MusicManager.play(music)
+
+                if(playMode == 2) {
+                    val addedMusicQueueEmbed = EmbedManager.getAddedMusicQueueEmbed(music.name)
+                    preBotMessage = message.channel.block().createMessage(addedMusicQueueEmbed).block()
+                }
+                else if(playMode == 1) {
+                    val playNowMusicEmbed = EmbedManager.getPlayNowMusicEmbed(music, message.author.get().mention)
+                    preBotMessage = message.channel.block().createMessage(playNowMusicEmbed).block()
+                }
             }
 
             if (message.content.contains("!info", ignoreCase = true)) {
@@ -157,7 +166,17 @@ fun main(args : Array<String>) {
             }
 
             if (message.content.contains("!skip", ignoreCase = true)) {
-                MusicManager.skip()
+                preBotMessage?.let {
+                    it.delete().block()
+                    preBotMessage = null
+                }
+                val skippedMusic = MusicManager.skip()
+                val playNowMusicEmbed = EmbedManager.getSkippedMusicEmbed(skippedMusic)
+                preBotMessage = message.channel.block().createMessage(playNowMusicEmbed).block()
+            }
+
+            if (message.content.contains("!stop", ignoreCase = true)) {
+                MusicManager.stop()
             }
 
             if (message.content.contains("!leave", ignoreCase = true)) {

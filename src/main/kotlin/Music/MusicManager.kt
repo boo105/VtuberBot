@@ -56,18 +56,31 @@ object MusicManager {
         }
     }
 
-    fun play(music : MusicInfo) {
-        player.playingTrack?.let {
-            println("음악 큐 추가")
-            playList.add(music)
-        } ?:
-            println("음악 실행")
-            println(music.name)
-            currentMusic = music
-            scheduler.startPositions = music.startTime
-            scheduler.endPositions = music.endTime
-            println(music.videoLink)
-            playerManager.loadItem(music.videoLink, scheduler)
+    // 1 -> playNow , 2 -> addPlayList
+    fun play(music : MusicInfo) : Int {
+        if (player.playingTrack == null) {
+            playNow(music)
+            return 1
+        }
+        else {
+            addPlayList(music)
+            return 2
+        }
+    }
+
+    private fun playNow (music : MusicInfo) {
+        println("음악 실행")
+        println(music.name)
+        currentMusic = music
+        scheduler.startPositions = music.startTime
+        scheduler.endPositions = music.endTime
+        println(music.videoLink)
+        playerManager.loadItem(music.videoLink, scheduler)
+    }
+
+    private fun addPlayList(music : MusicInfo) {
+        println("음악 큐 추가")
+        playList.add(music)
     }
 
     fun playNext() {
@@ -76,10 +89,19 @@ object MusicManager {
         }
     }
 
-    fun skip() {
+    fun skip() : MusicInfo {
+        val skippedMusic = currentMusic
         player.stopTrack()
         scheduler.clear()
         playNext()
+        return skippedMusic as MusicInfo
+    }
+
+    fun stop() {
+        currentMusic = null
+        player.stopTrack()
+        playList.clear()
+        scheduler.clear()
     }
 
     fun getCurrentMusicInfo() : MusicInfo? {
@@ -88,12 +110,5 @@ object MusicManager {
 
     fun getPlayList() : List<MusicInfo> {
         return playList
-    }
-
-    fun quit() {
-        currentMusic = null
-        player.stopTrack()
-        playList.clear()
-        scheduler.clear()
     }
 }

@@ -1,4 +1,5 @@
 import Data.ChannelID
+import Data.MusicInfo
 import Music.MusicManager
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Color
@@ -95,5 +96,32 @@ object EmbedManager {
             .addField("Name", nameText, true)
 
         return hololiveListEmbed.build()
+    }
+
+    fun getPlayNowMusicEmbed(music : MusicInfo, userMention : String) : EmbedCreateSpec {
+        val playNowMusicEmbed: EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+            .color(Color.CYAN)
+            .title(":notes: ${music.name}")
+            .url(music.videoLink)
+            .description("[${userMention}]")
+        return playNowMusicEmbed.build()
+    }
+
+    fun getAddedMusicQueueEmbed(musicName : String) : EmbedCreateSpec {
+        val playListIndex = MusicManager.getPlayList().size
+
+        val addedMusicQueueEmbed: EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+            .color(Color.CYAN)
+            .description("대기열에 추가 : ``${musicName}`` - ${playListIndex} 번째")
+
+        return addedMusicQueueEmbed.build()
+    }
+
+    fun getSkippedMusicEmbed(music : MusicInfo) : EmbedCreateSpec {
+        val skippedMusicEmbed: EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+            .color(Color.CYAN)
+            .description("[${music.name}](${music.videoLink}) 을 스킵하였습니다.")
+
+        return skippedMusicEmbed.build()
     }
 }
