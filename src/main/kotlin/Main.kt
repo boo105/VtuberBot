@@ -102,7 +102,6 @@ fun main(args : Array<String>) {
                 val hotSongs = runBlocking {
                     return@runBlocking HoloDexRequest.getHotSongs()
                 }
-                println(hotSongs)
                 MusicManager.playSongs(hotSongs)
             }
 
