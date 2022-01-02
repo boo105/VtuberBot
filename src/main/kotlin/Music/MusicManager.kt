@@ -13,7 +13,6 @@ import discord4j.voice.AudioProvider
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-
 object MusicManager {
     // Creates AudioPlayer instances and translates URLs to AudioTrack instances
     val playerManager: AudioPlayerManager = DefaultAudioPlayerManager()
@@ -70,11 +69,9 @@ object MusicManager {
 
     private fun playNow (music : MusicInfo) {
         println("음악 실행")
-        println(music.name)
         currentMusic = music
-        scheduler.startPositions = music.startTime
-        scheduler.endPositions = music.endTime
-        println(music.videoLink)
+        scheduler.setMusic(music)
+        println(music.toString())
         playerManager.loadItem(music.videoLink, scheduler)
     }
 

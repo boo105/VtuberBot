@@ -5,12 +5,13 @@ import discord4j.core.spec.EmbedCreateSpec
 import discord4j.rest.util.Color
 import kotlinx.coroutines.runBlocking
 import java.time.Instant
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 // Embed 생성 관리자
 object EmbedManager {
     fun getHelpEmbed() : EmbedCreateSpec {
-        // 추후 embed 전용 클래스를 따로 만들어서 설정하기
-        val helpEmbed: EmbedCreateSpec = EmbedCreateSpec.builder()
+        val helpEmbed : EmbedCreateSpec = EmbedCreateSpec.builder()
             .color(Color.CYAN)
             .title("도움말")
             .addField("!생방송","현재 홀로라이브 생방송 목록",false)
@@ -67,20 +68,20 @@ object EmbedManager {
             .color(Color.CYAN)
             .title("플레이 리스트")
 
-        var nameText = ""
-        var artistText = ""
-        for(music in playList) {
-            nameText += music.name + "\n"
-            artistText += music.artist + "\n"
-        }
-        musicQueueListEmbed.addField("노래 제목", nameText, true)
-            .addField("아티스트", artistText, true)
+        var musicQueueText = ""
+        var musicQueueNo = 1
 
+        for (music in playList) {
+            val duration = music.getMusicDruation()?.toDuration(DurationUnit.SECONDS)
+            musicQueueText += "`${musicQueueNo}.` [${music.name}](${music.videoLink}) - `${music.artist}` [${duration}]\n"
+            musicQueueNo += 1
+        }
+        musicQueueListEmbed.description(musicQueueText)
         return musicQueueListEmbed.build()
     }
 
     fun getHoloLiveListEmbed(holoiveChannelIdList : List<ChannelID>) : EmbedCreateSpec {
-        val hololiveListEmbed: EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+        val hololiveListEmbed : EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
             .color(Color.CYAN)
             .title("홀로라이브 목록")
 
@@ -99,7 +100,7 @@ object EmbedManager {
     }
 
     fun getPlayNowMusicEmbed(music : MusicInfo, userMention : String) : EmbedCreateSpec {
-        val playNowMusicEmbed: EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+        val playNowMusicEmbed : EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
             .color(Color.CYAN)
             .title(":notes: ${music.name}")
             .url(music.videoLink)
@@ -118,10 +119,18 @@ object EmbedManager {
     }
 
     fun getSkippedMusicEmbed(music : MusicInfo) : EmbedCreateSpec {
-        val skippedMusicEmbed: EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+        val skippedMusicEmbed : EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
             .color(Color.CYAN)
             .description("[${music.name}](${music.videoLink}) 을 스킵하였습니다.")
 
         return skippedMusicEmbed.build()
+    }
+
+    fun testEmbed() : EmbedCreateSpec {
+        val testEmbed : EmbedCreateSpec.Builder = EmbedCreateSpec.builder()
+            .color(Color.CYAN)
+            .description("테스트\u2800\u2800⠀⠀⠀⠀    ⠀입니다.")
+
+        return testEmbed.build()
     }
 }

@@ -4,10 +4,17 @@ import java.util.*
 import java.util.logging.Handler
 import kotlin.concurrent.timer
 import kotlin.concurrent.timerTask
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 fun main() {
-    val testString = "23m42s"
-    val testString2 = "623s"
+
+    val test = 1022
+
+    println(test.toDuration(DurationUnit.SECONDS))
+
+//    val testString = "23m42s"
+//    val testString2 = "623s"
 //
 //    val regex = "[0-9]*m[0-9]*s".toRegex()
 //
@@ -18,9 +25,9 @@ fun main() {
 //        println("매칭 실패")
 //    }
 
-    val timeStampSplit = testString.split("m")
-    val MINUTE = timeStampSplit[0]
-    val SECONDS = timeStampSplit[1].split("s")[0]
+//    val timeStampSplit = testString.split("m")
+//    val MINUTE = timeStampSplit[0]
+//    val SECONDS = timeStampSplit[1].split("s")[0]
 
 
 //    val timer = Timer(false)
