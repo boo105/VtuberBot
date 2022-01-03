@@ -11,6 +11,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import discord4j.core.spec.*
 import discord4j.rest.util.Color
 import kotlinx.coroutines.runBlocking
+import org.apache.commons.io.Charsets
 import reactor.core.publisher.Mono
 import java.io.File
 import java.time.Instant
@@ -77,23 +78,17 @@ fun main(args : Array<String>) {
             }
 
             if (message.content.equals("!도움말", ignoreCase = true)) {
-                preBotMessage?.let {
-                    it.delete().block()
-                    preBotMessage = null
-                }
+                BotMessageController.deletePreMessage()
 
                 val helpEmbed = EmbedManager.getHelpEmbed()
-                preBotMessage = message.channel.block().createMessage(helpEmbed).block()
+                BotMessageController.sendMessage(message.channel.block(), helpEmbed)
             }
 
             if (message.content.equals("!생방송", ignoreCase = true)) {
-                preBotMessage?.let {
-                    it.delete().block()
-                    preBotMessage = null
-                }
+                BotMessageController.deletePreMessage()
 
                 val liveListEmbed = EmbedManager.getLiveListEmbed()
-                preBotMessage = message.channel.block().createMessage(liveListEmbed).block()
+                BotMessageController.sendMessage(message.channel.block(), liveListEmbed)
             }
 
             if (message.content.equals("!인기차트", ignoreCase = true)) {
@@ -102,7 +97,7 @@ fun main(args : Array<String>) {
                 val hotSongs = runBlocking {
                     return@runBlocking HoloDexRequest.getHotSongs()
                 }
-                MusicManager.playSongs(hotSongs)
+                MusicManager.playSongs(hotSongs) 
             }
 
             if (message.content.contains("!play", ignoreCase = true)) {
@@ -124,55 +119,43 @@ fun main(args : Array<String>) {
             }
 
             if (message.content.contains("!info", ignoreCase = true)) {
-                preBotMessage?.let {
-                    it.delete().block()
-                    preBotMessage = null
-                }
+                BotMessageController.deletePreMessage()
 
                 val currentMusicInfoEmbed = EmbedManager.getCurrentMusicInfoEmbed()
-                preBotMessage = message.channel.block().createMessage(currentMusicInfoEmbed).block()
+                BotMessageController.sendMessage(message.channel.block(), currentMusicInfoEmbed)
             }
 
             if (message.content.contains("!list", ignoreCase = true)) {
-                preBotMessage?.let {
-                    it.delete().block()
-                    preBotMessage = null
-                }
+                BotMessageController.deletePreMessage()
 
                 val musicQueueListEmbed = EmbedManager.getMusicQueueListEmbed()
-                preBotMessage = message.channel.block().createMessage(musicQueueListEmbed).block()
+                BotMessageController.sendMessage(message.channel.block(), musicQueueListEmbed)
             }
 
             if (message.content.contains("!홀로라이브", ignoreCase = true)) {
-                preBotMessage?.let {
-                    it.delete().block()
-                    preBotMessage = null
-                }
+                BotMessageController.deletePreMessage()
 
                 val command = message.content.split(" ")
                 if (command.size != 2) {
                     val hololiveListEmbed = EmbedManager.getHoloLiveListEmbed(holoiveChannelIdList)
-                    preBotMessage = message.channel.block().createMessage(hololiveListEmbed).block()
+                    BotMessageController.sendMessage(message.channel.block(), hololiveListEmbed)
                 }
                 else if (command.size.equals(2)) {
                     val playList = runBlocking {
                         val channelID = holoiveChannelIdList[command[1].toInt() - 1].channelId
                         return@runBlocking HoloDexRequest.getPlayList(channelID)
                     }
-
                     BotVoiceChannelController.join(event)
                     MusicManager.playSongs(playList)
                 }
             }
 
             if (message.content.contains("!skip", ignoreCase = true)) {
-                preBotMessage?.let {
-                    it.delete().block()
-                    preBotMessage = null
-                }
+                BotMessageController.deletePreMessage()
+
                 val skippedMusic = MusicManager.skip()
                 val playNowMusicEmbed = EmbedManager.getSkippedMusicEmbed(skippedMusic)
-                preBotMessage = message.channel.block().createMessage(playNowMusicEmbed).block()
+                BotMessageController.sendMessage(message.channel.block(), playNowMusicEmbed)
             }
 
             if (message.content.contains("!stop", ignoreCase = true)) {
