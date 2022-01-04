@@ -1,3 +1,5 @@
+import Api.APIKeyManager
+import Api.YoutubeRequest
 import Data.ChannelID
 import Data.ClientToken
 import Music.*
@@ -20,6 +22,7 @@ import java.time.Instant
 * 이전 메세지 삭제 코드 계속 중복 되니까 메세지 관리하는 객체를 하나 만들기!!!!!!
 * 사용자 즐겨찾기 목록 ( 자기가 즐겨찾기 추가 하는데 사용자별로 존재)
 * 커맨드(명령어) 목록 리팩토링
+* 링크로 play 시 duration때문에 다음노래 실행안됨
 * */
 
 fun main(args : Array<String>) {
@@ -110,16 +113,20 @@ fun main(args : Array<String>) {
                 val url = commandSplit[1].replace(" ","")
                 BotVoiceChannelController.join(event)
 
-                val music = LinkManager.getMusicForYoutubeLink(url)
-                val playMode = MusicManager.play(music)
-
-                if(playMode == 2) {
-                    val addedMusicQueueEmbed = EmbedManager.getAddedMusicQueueEmbed(music.name)
-                    preBotMessage = message.channel.block().createMessage(addedMusicQueueEmbed).block()
+                val music = runBlocking {
+                    return@runBlocking YoutubeRequest.getVideoInfo(url)
                 }
-                else if(playMode == 1) {
-                    val playNowMusicEmbed = EmbedManager.getPlayNowMusicEmbed(music, message.author.get().mention)
-                    preBotMessage = message.channel.block().createMessage(playNowMusicEmbed).block()
+                music?.let {
+                    val playMode = MusicManager.play(music)
+
+                    if(playMode == 2) {
+                        val addedMusicQueueEmbed = EmbedManager.getAddedMusicQueueEmbed(music.name)
+                        preBotMessage = message.channel.block().createMessage(addedMusicQueueEmbed).block()
+                    }
+                    else if(playMode == 1) {
+                        val playNowMusicEmbed = EmbedManager.getPlayNowMusicEmbed(music, message.author.get().mention)
+                        preBotMessage = message.channel.block().createMessage(playNowMusicEmbed).block()
+                    }
                 }
             }
 

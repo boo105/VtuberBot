@@ -7,6 +7,7 @@ class MusicInfo(
     val name : String,
     val artist : String,
     val videoLink : String,
+
     private val startTime : Long? = null,
     private val endTime : Int? = null,
     private var duration : Long? = null
@@ -27,6 +28,10 @@ class MusicInfo(
 
     fun getStartTime() : Long? {
         return startTime
+    }
+
+    fun getEndTime() : Int? {
+        return endTime
     }
 
     fun getMusicDruation() : Long? {

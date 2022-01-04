@@ -1,3 +1,5 @@
+import Api.APIKeyManager
+import Api.RetroFitManager
 import Data.*
 import Music.LinkManager
 import com.google.gson.GsonBuilder
@@ -40,21 +42,19 @@ interface API {
     fun getPlayList(
         @Header("X-APIKEY") apiKey : String,
         @Body requestPlayList : RequestPlayList
-    ) : Call<List<ResultGetPlayListItemItem>>
+    ) : Call<List<ResultGetPlayListItem>>
 }
 
 
 object HoloDexRequest {
-    private val API_KEY = "c70cd6cf-91d5-4923-bdcb-62064609c040"
+    private val API_KEY = APIKeyManager.getHoloDexAPIKey()
     private val BASE_URL = "https://holodex.net/api/v2/"
+    private var api : API
 
-    private val gson = GsonBuilder().setLenient().create()
-    private val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
-
-    private val api = retrofit.create(API::class.java)
+    init {
+        val retrofit = RetroFitManager.getNewRetroFitInstance(BASE_URL)
+        api = retrofit.create(API::class.java)
+    }
 
     suspend fun getLive() : MutableList<HoloLiveOnAirInfo> {
         val getLiveResponse = api.getLive(API_KEY,org = "Hololive",limit = 10).awaitResponse()

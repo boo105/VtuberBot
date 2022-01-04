@@ -24,23 +24,23 @@ class TrackScheduler(private val player: AudioPlayer) : AudioLoadResultHandler {
         startPositions?.let {
             val startPosition = it * 1000
             player.playingTrack.position = startPosition
+        }
 
-            duration?.let {
-                duration = (it * 1000) + 2000   // 2000ms 는 부자연스럽게 끝내는거 방지용
+        duration?.let {
+            duration = (it * 1000) + 2000   // 2000ms 는 부자연스럽게 끝내는거 방지용
 
-                timer = Timer(true)
-                timer.schedule(timerTask{
-                    player.stopTrack()
-                    startPositions = null
-                    duration = null
-                    val formatter = DateTimeFormatter.ofPattern("mm분 ss초")
-                    val endTime = LocalTime.now()
-                    val realTime = endTime.minusHours(startTime.hour.toLong()).minusMinutes(startTime.minute.toLong()).minusSeconds(startTime.second.toLong())
-                    println("실제 소요시간 : ${realTime.format(formatter)}")
-                    println("종료 성공!")
-                    MusicManager.playNext()
-                },duration!!)
-            }
+            timer = Timer(true)
+            timer.schedule(timerTask{
+                player.stopTrack()
+                startPositions = null
+                duration = null
+                val formatter = DateTimeFormatter.ofPattern("mm분 ss초")
+                val endTime = LocalTime.now()
+                val realTime = endTime.minusHours(startTime.hour.toLong()).minusMinutes(startTime.minute.toLong()).minusSeconds(startTime.second.toLong())
+                println("실제 소요시간 : ${realTime.format(formatter)}")
+                println("종료 성공!")
+                MusicManager.playNext()
+            },duration!!)
         }
     }
 

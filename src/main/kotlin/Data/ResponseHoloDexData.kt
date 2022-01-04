@@ -42,7 +42,7 @@ data class ChannelForSong(
     val photo: String
 )
 
-data class ResultGetPlayListItemItem(
+data class ResultGetPlayListItem(
     val amUrl: String,
     val art: String,
     val available_at: String,
