@@ -1,7 +1,5 @@
 package Music
 
-import Data.MusicInfo
-
 object LinkManager {
     fun getVideoLink(video_id : String, startTime : Int) : String {
         val YOUTUBE_VIDEO_BASE_URL = "https://www.youtube.com/watch"

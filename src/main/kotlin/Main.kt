@@ -1,4 +1,3 @@
-import Api.APIKeyManager
 import Api.YoutubeRequest
 import Data.ChannelID
 import Data.ClientToken
@@ -10,13 +9,10 @@ import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.core.event.domain.lifecycle.ReadyEvent
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.spec.*
-import discord4j.rest.util.Color
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.Charsets
 import reactor.core.publisher.Mono
 import java.io.File
-import java.time.Instant
 
 /*
 * 해야 할거
