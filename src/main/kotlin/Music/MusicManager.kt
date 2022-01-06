@@ -81,7 +81,7 @@ object MusicManager {
     }
 
     fun playNext() {
-        playList.peek().let {
+        playList.peek()?.let {
             play(playList.poll())
         }
     }
