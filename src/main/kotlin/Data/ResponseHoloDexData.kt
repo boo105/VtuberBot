@@ -29,11 +29,16 @@ data class ResultGetHotSongsItem(
     val channel: ChannelForSong,
     val channel_id: String,
     val end: Int,
-    val id: Int,
+    val id: String,
     val name: String,
     val original_artist: String,
     val score: Double,
     val start: Int,
+    val itunesid: Long,
+    val amUrl: String,
+    val status: String,
+    val is_mv: Boolean,
+    val creator_id: String,
     val video_id: String
 )
 data class ChannelForSong(
